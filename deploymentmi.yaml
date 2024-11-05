@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-aks-keyvault-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-aks-keyvault-app
+  template:
+    metadata:
+      labels:
+        app: my-aks-keyvault-app
+        azure.workload.identity/use: "true"
+        kubernetes.azure.com/pod-network: pn
+        kubernetes.azure.com/pod-network-instance: pni
+    spec:
+      serviceAccountName: mi-service-account
+      containers:
+      - name: my-aks-keyvault-app
+        image: isaac73/my-aks-keyvault-app:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          privileged: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-aks-keyvault-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: my-aks-keyvault-app
