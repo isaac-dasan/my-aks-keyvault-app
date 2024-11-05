@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os/exec"
 	"time"
+	_ "time/tzdata" // Import tzdata to embed time zone data
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
@@ -67,7 +68,6 @@ func getoutputFileName() string {
 	pstTime := now.In(pst)
 
 	// Define the output file with timestamp
-
 	outputFile := fmt.Sprintf("tcpdump-%s.pcap", pstTime.Format("2006-01-02T15-04-05"))
 	fmt.Printf("Output file: %s\n", outputFile)
 	return outputFile
