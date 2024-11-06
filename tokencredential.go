@@ -21,18 +21,9 @@ type clientAssertionCredential struct {
 	lastRead        time.Time
 }
 
-// clientAssertionCredentialOptions contains optional parameters for ClientAssertionCredential.
-type clientAssertionCredentialOptions struct {
-	azcore.ClientOptions
-}
-
 // newClientAssertionCredential constructs a clientAssertionCredential. Pass nil for options to accept defaults.
-func newClientAssertionCredential(tenantID, clientID, authorityHost, file string, options *clientAssertionCredentialOptions) (*clientAssertionCredential, error) {
+func newClientAssertionCredential(tenantID, clientID, authorityHost, file string) (*clientAssertionCredential, error) {
 	c := &clientAssertionCredential{file: file}
-
-	if options == nil {
-		options = &clientAssertionCredentialOptions{}
-	}
 
 	cred := confidential.NewCredFromAssertionCallback(
 		func(ctx context.Context, _ confidential.AssertionRequestOptions) (string, error) {
@@ -46,7 +37,10 @@ func newClientAssertionCredential(tenantID, clientID, authorityHost, file string
 		return nil, fmt.Errorf("failed to construct authority URL: %w", err)
 	}
 
-	client, err := confidential.New(authority, clientID, cred)
+	client, err := confidential.New(authority, clientID, cred, confidential.WithHTTPClient(&http.Client{
+		Transport: &CustomeTransporter{},
+	}))
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create confidential client: %w", err)
 	}
@@ -58,6 +52,7 @@ func newClientAssertionCredential(tenantID, clientID, authorityHost, file string
 // GetToken implements the TokenCredential interface
 func (c *clientAssertionCredential) GetToken(ctx context.Context, opts policy.TokenRequestOptions) (azcore.AccessToken, error) {
 	// get the token from the confidential client
+	fmt.Println("Getting token")
 	token, err := c.client.AcquireTokenByCredential(ctx, opts.Scopes)
 	if err != nil {
 		return azcore.AccessToken{}, err
@@ -72,6 +67,7 @@ func (c *clientAssertionCredential) GetToken(ctx context.Context, opts policy.To
 // getAssertion reads the assertion from the file and returns it
 // if the file has not been read in the last 5 minutes
 func (c *clientAssertionCredential) getAssertion(context.Context) (string, error) {
+	fmt.Println("Getting Assertion")
 	if now := time.Now(); c.lastRead.Add(5 * time.Minute).Before(now) {
 		content, err := os.ReadFile(c.file)
 		if err != nil {
@@ -83,11 +79,11 @@ func (c *clientAssertionCredential) getAssertion(context.Context) (string, error
 	return c.assertion, nil
 }
 
-// MyTransporter struct that will implement the Transporter interface
-type MyTransporter struct{}
+// CustomeTransporter struct that will implement the Transporter interface
+type CustomeTransporter struct{}
 
-// Implement the Do method for MyTransporter
-func (t *MyTransporter) Do(req *http.Request) (*http.Response, error) {
+// Implement the RoundTrip method for MyTransporter
+func (t *CustomeTransporter) RoundTrip(req *http.Request) (*http.Response, error) {
 	// send the request using an HTTP client that uses the local address of eth0
 	client := &http.Client{
 		Transport: &http.Transport{
@@ -100,7 +96,10 @@ func (t *MyTransporter) Do(req *http.Request) (*http.Response, error) {
 		},
 	}
 	return client.Do(req)
+}
 
+func (t *CustomeTransporter) Do(req *http.Request) (*http.Response, error) {
+	return t.RoundTrip(req)
 }
 
 func getEth0IP() net.IP {

@@ -4,18 +4,22 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 	_ "time/tzdata" // Import tzdata to embed time zone data
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 )
 
 func main() {
 
-	http.HandleFunc("/getsecret", func(w http.ResponseWriter, r *http.Request) {
-		getSecretWithPackets()
+	http.HandleFunc("/getsecret/{eth}/{credType}", func(w http.ResponseWriter, r *http.Request) {
+		eth := r.URL.Query().Get("eth")
+		credType := r.URL.Query().Get("credType")
+		getSecretWithPackets(eth, credType)
 	})
 
 	err := http.ListenAndServe(":8080", nil)
@@ -73,7 +77,7 @@ func getoutputFileName() string {
 	return outputFile
 }
 
-func getSecretWithPackets() {
+func getSecretWithPackets(eth string, credType string) {
 	outputFile := getoutputFileName()
 	// Create a context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -124,7 +128,11 @@ func getSecretWithPackets() {
 			// Cancel the context to stop tcpdump
 			cancel() // Cancel the context to stop tcpdump
 		}()
-		getSecret()
+		if credType == "clientAssertion" {
+			getSecretWithClientAssertion(eth)
+		} else {
+			getSecretWithDefaultCreds(eth)
+		}
 	}()
 
 	// Wait for the command to finish or an error to occur
@@ -146,13 +154,8 @@ func getSecretWithPackets() {
 	fmt.Printf("tcpdump output written to %s\n", outputFile)
 }
 
-func getSecret() {
-
-	fmt.Printf("Getting creds\n")
-	// cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath, nil)
-	// if err != nil {
-	// 	panic(err)
-	// }
+func getSecretWithDefaultCreds(eth string) {
+	fmt.Println("Getting secrets with default creds")
 
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -161,7 +164,14 @@ func getSecret() {
 
 	fmt.Printf("Initialize new Client\n")
 	// initialize keyvault client
-	client, err := azsecrets.NewClient("https://isaacskvault.vault.azure.net/", cred, &azsecrets.ClientOptions{})
+	opts := &azsecrets.ClientOptions{}
+	if eth == "eth0" {
+		opts = getClientOptionsWithTransport()
+		fmt.Println("Getting secrets through eth0 ip")
+	} else {
+		fmt.Println("Getting secrets through default ip")
+	}
+	client, err := azsecrets.NewClient("https://isaacskvault.vault.azure.net/", cred, opts)
 	if err != nil {
 		panic(err)
 	}
@@ -175,4 +185,62 @@ func getSecret() {
 	} else {
 		fmt.Printf("Secret value: %s\n", *resp.Value)
 	}
+}
+
+func getSecretWithClientAssertion(eth string) {
+	fmt.Println("Getting secrets with client assertion")
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	tenantID := os.Getenv("AZURE_TENANT_ID")
+	tokenFilePath := os.Getenv("AZURE_FEDERATED_TOKEN_FILE")
+	authorityHost := os.Getenv("AZURE_AUTHORITY_HOST")
+
+	if clientID == "" {
+		panic("AZURE_CLIENT_ID environment variable is not set")
+	}
+	if tenantID == "" {
+		panic("AZURE_TENANT_ID environment variable is not set")
+	}
+	if tokenFilePath == "" {
+		panic("AZURE_FEDERATED_TOKEN_FILE environment variable is not set")
+	}
+	if authorityHost == "" {
+		panic("AZURE_AUTHORITY_HOST environment variable is not set")
+	}
+	// Initialize a new client assertion credential
+	cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath)
+	if err != nil {
+		panic(err)
+	}
+
+	// Initialize a new Key Vault client
+	opts := &azsecrets.ClientOptions{}
+	if eth == "eth0" {
+		fmt.Println("Getting secrets through eth0 ip")
+		opts = getClientOptionsWithTransport()
+	} else {
+		fmt.Println("Getting secrets through default ip")
+	}
+	client, err := azsecrets.NewClient("https://isaacskvault.vault.azure.net/", cred, opts)
+	if err != nil {
+		panic(err)
+	}
+
+	// Retrieve a secret
+	secretName := "test"
+	fmt.Printf("Getting secret: %s\n", secretName)
+	resp, err := client.GetSecret(context.Background(), secretName, "", nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	} else {
+		fmt.Printf("Secret value: %s\n", *resp.Value)
+	}
+}
+
+func getClientOptionsWithTransport() *azsecrets.ClientOptions {
+	opts := &azsecrets.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Transport: &CustomeTransporter{},
+		},
+	}
+	return opts
 }
