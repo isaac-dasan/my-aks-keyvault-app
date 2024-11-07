@@ -18,7 +18,8 @@ import (
 
 func main() {
 
-	http.HandleFunc("/getsecret/{eth}/{credType}", func(w http.ResponseWriter, r *http.Request) {
+	r := mux.NewRouter()
+	r.HandleFunc("/getsecret/{eth}/{credType}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		eth := vars["eth"]
 		credType := vars["credType"]
@@ -27,8 +28,8 @@ func main() {
 		getSecretWithPackets(eth, credType)
 	})
 
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
+	fmt.Println("Server is running on port 8080...")
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 }
