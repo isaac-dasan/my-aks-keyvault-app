@@ -153,6 +153,16 @@ func getSecretWithPackets(eth string, credType string) {
 
 	fmt.Printf("tcpdump output written to %s\n", outputFile)
 }
+func connectToGooglewithEth0() {
+	fmt.Println("Connecting to google with eth0")
+	cmd := exec.Command("curl", "http://www.google.com")
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Error running curl: %v\n", err)
+		return
+	}
+	fmt.Printf("curl output: %s\n", output)
+}
 
 func getSecretWithDefaultCreds(eth string) {
 	fmt.Println("Getting secrets with default creds")

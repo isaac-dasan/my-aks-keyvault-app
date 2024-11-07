@@ -93,6 +93,7 @@ func (t *CustomeTransporter) RoundTrip(req *http.Request) (*http.Response, error
 					IP: getEth0IP(),
 				},
 			}).DialContext,
+			TLSHandshakeTimeout: 10 * time.Second,
 		},
 	}
 	return client.Do(req)
@@ -130,6 +131,7 @@ func getEth0IP() net.IP {
 
 				// return the IP address
 				if ip != nil && ip.To4() != nil {
+					fmt.Printf("ETH0 IP address: %s\n", ip)
 					return ip
 				}
 			}
