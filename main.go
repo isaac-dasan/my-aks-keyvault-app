@@ -34,35 +34,6 @@ func main() {
 	}
 }
 
-func changedefaultroute() {
-	// remove existing default route and add new default route
-	cmd := exec.Command("ip", "route", "del", "default", "via", "169.254.2.1")
-	_, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("Error running ip route: %v\n", err)
-		return
-	}
-
-	cmd = exec.Command("ip", "route", "add", "default", "via", "169.254.1.1", "dev", "eth0")
-	_, err = cmd.Output()
-	if err != nil {
-		fmt.Printf("Error running ip route: %v\n", err)
-		return
-	}
-}
-
-func printiproute() {
-	// Run the `ip route` command
-	cmd := exec.Command("ip", "route")
-	output, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("Error running ip route: %v\n", err)
-		return
-	}
-	// Print the output
-	fmt.Printf("ip route output:\n%s\n", output)
-}
-
 func getoutputFileName() string {
 	// Get the current time
 	now := time.Now()
@@ -158,16 +129,6 @@ func getSecretWithPackets(eth string, credType string) {
 	}
 
 	fmt.Printf("tcpdump output written to %s\n", outputFile)
-}
-func connectToGooglewithEth0() {
-	fmt.Println("Connecting to google with eth0")
-	cmd := exec.Command("curl", "http://www.google.com")
-	output, err := cmd.Output()
-	if err != nil {
-		fmt.Printf("Error running curl: %v\n", err)
-		return
-	}
-	fmt.Printf("curl output: %s\n", output)
 }
 
 func getSecretWithDefaultCreds(eth string) {

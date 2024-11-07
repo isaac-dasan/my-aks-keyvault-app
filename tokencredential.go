@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -37,9 +36,7 @@ func newClientAssertionCredential(tenantID, clientID, authorityHost, file string
 		return nil, fmt.Errorf("failed to construct authority URL: %w", err)
 	}
 
-	client, err := confidential.New(authority, clientID, cred, confidential.WithHTTPClient(&http.Client{
-		Transport: &CustomeTransporter{},
-	}))
+	client, err := confidential.New(authority, clientID, cred)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create confidential client: %w", err)
@@ -77,30 +74,6 @@ func (c *clientAssertionCredential) getAssertion(context.Context) (string, error
 		c.lastRead = now
 	}
 	return c.assertion, nil
-}
-
-// CustomeTransporter struct that will implement the Transporter interface
-type CustomeTransporter struct{}
-
-// Implement the RoundTrip method for MyTransporter
-func (t *CustomeTransporter) RoundTrip(req *http.Request) (*http.Response, error) {
-	// send the request using an HTTP client that uses the local address of eth0
-	client := &http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				LocalAddr: &net.TCPAddr{
-					IP: getEth0IP(),
-				},
-			}).DialContext,
-			TLSHandshakeTimeout: 10 * time.Second,
-		},
-	}
-	return client.Do(req)
-}
-
-func (t *CustomeTransporter) Do(req *http.Request) (*http.Response, error) {
-	return t.RoundTrip(req)
 }
 
 func getEth0IP() net.IP {
