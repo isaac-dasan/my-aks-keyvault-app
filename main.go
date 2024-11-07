@@ -185,7 +185,7 @@ func getSecretWithClientAssertion(eth string) {
 		panic("AZURE_AUTHORITY_HOST environment variable is not set")
 	}
 	// Initialize a new client assertion credential
-	cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath)
+	cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath, eth)
 	if err != nil {
 		panic(err)
 	}

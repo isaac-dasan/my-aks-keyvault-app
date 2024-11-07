@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -21,7 +22,7 @@ type clientAssertionCredential struct {
 }
 
 // newClientAssertionCredential constructs a clientAssertionCredential. Pass nil for options to accept defaults.
-func newClientAssertionCredential(tenantID, clientID, authorityHost, file string) (*clientAssertionCredential, error) {
+func newClientAssertionCredential(tenantID, clientID, authorityHost, file, eth string) (*clientAssertionCredential, error) {
 	c := &clientAssertionCredential{file: file}
 
 	cred := confidential.NewCredFromAssertionCallback(
@@ -36,7 +37,19 @@ func newClientAssertionCredential(tenantID, clientID, authorityHost, file string
 		return nil, fmt.Errorf("failed to construct authority URL: %w", err)
 	}
 
-	client, err := confidential.New(authority, clientID, cred)
+	opts := confidential.WithHTTPClient(&http.Client{})
+	if eth == "eth0" {
+		fmt.Println("AcquireTokenByCredential through eth0 ip")
+		opts = confidential.WithHTTPClient(
+			&http.Client{
+				Transport: &CustomeTransporter{},
+				Timeout:   10 * time.Second,
+			})
+	} else {
+		fmt.Println("AcquireTokenByCredential through default ip")
+	}
+
+	client, err := confidential.New(authority, clientID, cred, opts)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create confidential client: %w", err)
@@ -111,4 +124,24 @@ func getEth0IP() net.IP {
 		}
 	}
 	panic("eth0 not found")
+}
+
+// CustomeTransporter struct that will implement the Transporter interface
+type CustomeTransporter struct{}
+
+// Implement the RoundTrip method for MyTransporter
+func (t *CustomeTransporter) RoundTrip(req *http.Request) (*http.Response, error) {
+	// send the request using an HTTP client that uses the local address of eth0
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				LocalAddr: &net.TCPAddr{
+					IP: getEth0IP(),
+				},
+			}).DialContext,
+			TLSHandshakeTimeout: 10 * time.Second,
+		},
+	}
+	return client.Do(req)
 }
