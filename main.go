@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -175,6 +176,7 @@ func getSecretWithDefaultCreds(eth string) {
 	fmt.Printf("Initialize new Client\n")
 	// initialize keyvault client
 	opts := &azsecrets.ClientOptions{}
+
 	if eth == "eth0" {
 		opts = getClientOptionsWithTransport()
 		fmt.Println("Getting secrets through eth0 ip")
@@ -247,10 +249,32 @@ func getSecretWithClientAssertion(eth string) {
 }
 
 func getClientOptionsWithTransport() *azsecrets.ClientOptions {
+	// Get the eth0 IP address
+	eth0IP := getEth0IP()
+	// Create a TCP address with the eth0 IP address
+	localAddr := &net.TCPAddr{
+		IP: eth0IP,
+	}
+
+	// Create a custom http.Transport with LocalAddr set
+	transport := &http.Transport{
+		DialContext: (&net.Dialer{
+			LocalAddr: localAddr,
+			Timeout:   10 * time.Second,
+		}).DialContext,
+	}
+
+	// Create an HTTP client with the custom transport
+	httpClient := &http.Client{
+		Transport: transport,
+	}
+
+	// Create a ClientOptions with the custom HTTP client
+	clientOptions := &azcore.ClientOptions{
+		Transport: httpClient,
+	}
 	opts := &azsecrets.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Transport: &CustomeTransporter{},
-		},
+		ClientOptions: *clientOptions,
 	}
 	return opts
 }
