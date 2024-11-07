@@ -13,13 +13,17 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 
 	http.HandleFunc("/getsecret/{eth}/{credType}", func(w http.ResponseWriter, r *http.Request) {
-		eth := r.URL.Query().Get("eth")
-		credType := r.URL.Query().Get("credType")
+		vars := mux.Vars(r)
+		eth := vars["eth"]
+		credType := vars["credType"]
+		fmt.Printf("eth: %s\n", eth)
+		fmt.Printf("credType: %s\n", credType)
 		getSecretWithPackets(eth, credType)
 	})
 
