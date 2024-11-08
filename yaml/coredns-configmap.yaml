@@ -23,8 +23,3 @@ data:
       reload
       loadbalance
     }
-    privatelink.vaultcore.azure.net:53 {
-      errors
-      cache 30
-      forward . 168.63.129.16
-    }

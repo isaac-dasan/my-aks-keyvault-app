@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y ca-certificates
 # Update the package list and install necessary tools
 RUN apt-get update && apt-get install -y \
     tcpdump \
+    traceroute \
+    telnet \
     iproute2 \
     net-tools \
     iputils-ping \

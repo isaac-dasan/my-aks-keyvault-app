@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-aks-keyvault-app
+  name: my-aks-keyvault-dep-noalias
 spec:
   replicas: 1
   selector:
@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-30523925-vmss000000
+        kubernetes.io/hostname: aks-standardd4s1-30523925-vmss000002
       containers:
       - name: my-aks-keyvault-app
         image: isaac73/my-aks-keyvault-app:latest
@@ -33,10 +33,3 @@ spec:
         - containerPort: 8080
         securityContext:
           privileged: true
-      hostAliases:
-      - ip: "10.8.1.65"
-        hostnames:
-        - "nginx"
-      - ip: "8.8.8.8"
-        hostnames:
-        - "google"

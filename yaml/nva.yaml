@@ -47,6 +47,7 @@ kind: Service
 metadata:
   name: nva-service
 spec:
+  type: LoadBalancer
   selector:
     app: nva
   ports:
