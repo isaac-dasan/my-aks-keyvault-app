@@ -18,7 +18,7 @@ spec:
       serviceAccountName: mi-service-account
       containers:
       - name: my-aks-keyvault-app
-        image: isaac73/my-aks-keyvault-app:latest
+        image: isaac73/my-aks-keyvault-app:mux
         resources:
           limits:
             memory: "512Mi"
