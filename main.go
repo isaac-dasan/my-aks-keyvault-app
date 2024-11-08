@@ -134,7 +134,7 @@ func getSecretWithPackets(eth string, credType string) {
 func getSecretWithDefaultCreds(eth string) {
 	fmt.Println("Getting secrets with default creds")
 
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	cred, err := azidentity.NewWorkloadIdentityCredential(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -174,16 +174,25 @@ func getSecretWithClientAssertion(eth string) {
 
 	if clientID == "" {
 		panic("AZURE_CLIENT_ID environment variable is not set")
+	} else {
+		fmt.Printf("Client ID: %s\n", clientID)
 	}
 	if tenantID == "" {
 		panic("AZURE_TENANT_ID environment variable is not set")
+	} else {
+		fmt.Printf("Tenant ID: %s\n", tenantID)
 	}
 	if tokenFilePath == "" {
 		panic("AZURE_FEDERATED_TOKEN_FILE environment variable is not set")
+	} else {
+		fmt.Printf("Token file path: %s\n", tokenFilePath)
 	}
 	if authorityHost == "" {
 		panic("AZURE_AUTHORITY_HOST environment variable is not set")
+	} else {
+		fmt.Printf("Authority host: %s\n", authorityHost)
 	}
+
 	// Initialize a new client assertion credential
 	cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath, eth)
 	if err != nil {
