@@ -1,0 +1,43 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-aks-keyvault-stapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-aks-keyvault-stapp
+  template:
+    metadata:
+      labels:
+        app: my-aks-keyvault-stapp
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: mi-service-account
+      containers:
+      - name: my-aks-keyvault-stapp
+        image: isaac73/my-aks-keyvault-app:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          privileged: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-aks-keyvault-stsvc
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: my-aks-keyvault-stapp

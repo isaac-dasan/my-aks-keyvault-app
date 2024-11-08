@@ -1,4 +1,21 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name login.microsoftonline.com;
+
+      location / {
+        proxy_pass https://login.microsoftonline.com;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $host;
+      }
+    }
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: nva-pod
@@ -17,6 +34,13 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
+    volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-config
+  volumes:
+    - name: nginx-config
+      configMap:
+        name: nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -29,26 +53,3 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 80
-  type: LoadBalancer
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-nva-traffic
-spec:
-  podSelector:
-    matchLabels:
-      app: nva
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: my-aks-keyvault-app
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: my-aks-keyvault-app

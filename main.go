@@ -242,6 +242,7 @@ func getClientOptionsWithTransport() *azsecrets.ClientOptions {
 	// Create an HTTP client with the custom transport
 	httpClient := &http.Client{
 		Transport: transport,
+		Timeout:   10 * time.Second,
 	}
 
 	// Create a ClientOptions with the custom HTTP client
