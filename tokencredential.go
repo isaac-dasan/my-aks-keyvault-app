@@ -42,7 +42,7 @@ func newClientAssertionCredential(tenantID, clientID, authorityHost, file, eth s
 		fmt.Println("AcquireTokenByCredential through eth0 ip")
 		opts = confidential.WithHTTPClient(
 			&http.Client{
-				Transport: &CustomeTransporter{},
+				Transport: &CustomTransporter{},
 				Timeout:   10 * time.Second,
 			})
 	} else {
@@ -126,11 +126,12 @@ func getEth0IP() net.IP {
 	panic("eth0 not found")
 }
 
-// CustomeTransporter struct that will implement the Transporter interface
-type CustomeTransporter struct{}
+// CustomTransporter struct that will implement the Transporter interface
+type CustomTransporter struct{}
 
 // Implement the RoundTrip method for MyTransporter
-func (t *CustomeTransporter) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *CustomTransporter) RoundTrip(req *http.Request) (*http.Response, error) {
+	fmt.Println("RoundTrip")
 	// send the request using an HTTP client that uses the local address of eth0
 	client := &http.Client{
 		Transport: &http.Transport{

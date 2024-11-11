@@ -141,7 +141,9 @@ func getSecretWithDefaultCreds(eth string) {
 
 	fmt.Printf("Initialize new Client\n")
 	// initialize keyvault client
-	opts := &azsecrets.ClientOptions{}
+	opts := &azsecrets.ClientOptions{
+		DisableChallengeResourceVerification: true,
+	}
 
 	if eth == "eth0" {
 		opts = getClientOptionsWithTransport()
@@ -200,7 +202,9 @@ func getSecretWithClientAssertion(eth string) {
 	}
 
 	// Initialize a new Key Vault client
-	opts := &azsecrets.ClientOptions{}
+	opts := &azsecrets.ClientOptions{
+		DisableChallengeResourceVerification: true,
+	}
 	if eth == "eth0" {
 		fmt.Println("Getting secrets through eth0 ip")
 		opts = getClientOptionsWithTransport()
