@@ -1,1 +1,9 @@
 tmp/
+yaml/custom-ca-configmap.yaml
+tls.key
+tls.csr
+tls.crt
+openssl.cnf
+ca.srl
+ca.key
+ca.crt
