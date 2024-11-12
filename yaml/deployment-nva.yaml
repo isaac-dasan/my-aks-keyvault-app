@@ -33,15 +33,7 @@ spec:
         - containerPort: 8080
         securityContext:
           privileged: true
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-aks-keyvault-svc
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 8080
-  selector:
-    app: my-aks-keyvault-app
+      hostAliases:
+      - ip: "172.16.10.100"
+        hostnames:
+        - "login.microsoftonline.com"

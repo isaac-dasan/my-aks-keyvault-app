@@ -1,17 +1,16 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-aks-keyvault-app
+  name: eth0def-dep
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: my-aks-keyvault-app
+      app: eth0def
   template:
     metadata:
       labels:
-        app: my-aks-keyvault-app
+        app: eth0def
         azure.workload.identity/use: "true"
         kubernetes.azure.com/pod-network: pn
         kubernetes.azure.com/pod-network-instance: pni
@@ -20,7 +19,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000000
       containers:
-      - name: my-aks-keyvault-app
+      - name: eth0def
         image: isaac73/my-aks-keyvault-app:latest
         resources:
           limits:
@@ -37,11 +36,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-aks-keyvault-svc
+  name: eth0def-svc
 spec:
   type: LoadBalancer
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: my-aks-keyvault-app
+    app: eth0def

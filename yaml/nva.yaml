@@ -5,13 +5,19 @@ metadata:
 data:
   default.conf: |
     server {
-      listen 80;
+      listen 443 ssl;
       server_name login.microsoftonline.com;
+
+      ssl_certificate     /etc/nginx/ssl/tls.crt;
+      ssl_certificate_key /etc/nginx/ssl/tls.key;
+      ssl_trusted_certificate /etc/ssl/certs/ca.crt;
 
       location / {
         proxy_pass https://login.microsoftonline.com;
         proxy_ssl_server_name on;
         proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       }
     }
 ---
@@ -26,31 +32,36 @@ spec:
   - name: nva-container
     image: nginx:latest
     ports:
-    - containerPort: 80
-    resources:
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
+    - containerPort: 443
     volumeMounts:
-        - mountPath: /etc/nginx/conf.d
-          name: nginx-config
+    - mountPath: /etc/nginx/conf.d
+      name: nginx-config
+    - mountPath: /etc/nginx/ssl
+      name: nginx-ssl
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: custom-ca
+      readOnly: true
   volumes:
-    - name: nginx-config
-      configMap:
-        name: nginx-config
+  - name: nginx-config
+    configMap:
+      name: nginx-config
+  - name: nginx-ssl
+    secret:
+      secretName: nginx-ssl
+  - name: custom-ca
+    configMap:
+      name: custom-ca
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: nva-service
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: nva
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
+    - protocol: TCP
+      port: 443
+      targetPort: 443
