@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eth1defpbr1-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eth1defpbr1
+  template:
+    metadata:
+      labels:
+        app: eth1defpbr1
+        azure.workload.identity/use: "true"
+        kubernetes.azure.com/pod-network: pn
+        kubernetes.azure.com/pod-network-instance: pni
+    spec:
+      serviceAccountName: mi-service-account
+      nodeSelector:
+        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000006
+      containers:
+      - name: eth1defpbr1
+        image: isaac73/my-aks-keyvault-app:latest
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          privileged: true
+        command: ['sh', '-c', 'sh /scripts/configure-network.sh && /myapp']
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: scripts
+        configMap:
+          name: network-scripts-eth1defpbr1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eth1defpbr1-svc
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: eth1defpbr1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-scripts-eth1defpbr1
+data:
+  configure-network.sh: |
+    #!/bin/sh
+    # Create additional routing table
+    echo "200 eth0_table" >> /etc/iproute2/rt_tables
+
+    # Make eth0 default in eth0_table
+    ip route add default via 169.254.1.1 dev eth0 table eth0_table
+
+    # Add outbound rule
+    export ip_address=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+    ip rule add from $ip_address lookup eth0_table
+
+    echo "ip route show table eth0_table"
+    ip route show table eth0_table
+    echo "ip rule show"
+    ip rule show
+    echo "ip route show"
+    ip route show
