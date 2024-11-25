@@ -11,6 +11,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 )
 
@@ -145,4 +146,67 @@ func (t *CustomTransporter) RoundTrip(req *http.Request) (*http.Response, error)
 		},
 	}
 	return client.Do(req)
+}
+
+func getSecretWithClientAssertion(eth string) {
+	fmt.Println("Getting secrets with client assertion")
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	tenantID := os.Getenv("AZURE_TENANT_ID")
+	tokenFilePath := os.Getenv("AZURE_FEDERATED_TOKEN_FILE")
+	authorityHost := os.Getenv("AZURE_AUTHORITY_HOST")
+
+	if clientID == "" {
+		panic("AZURE_CLIENT_ID environment variable is not set")
+	} else {
+		fmt.Printf("Client ID: %s\n", clientID)
+	}
+	if tenantID == "" {
+		panic("AZURE_TENANT_ID environment variable is not set")
+	} else {
+		fmt.Printf("Tenant ID: %s\n", tenantID)
+	}
+	if tokenFilePath == "" {
+		panic("AZURE_FEDERATED_TOKEN_FILE environment variable is not set")
+	} else {
+		fmt.Printf("Token file path: %s\n", tokenFilePath)
+	}
+	if authorityHost == "" {
+		panic("AZURE_AUTHORITY_HOST environment variable is not set")
+	} else {
+		fmt.Printf("Authority host: %s\n", authorityHost)
+	}
+
+	// Initialize a new client assertion credential
+	cred, err := newClientAssertionCredential(tenantID, clientID, authorityHost, tokenFilePath, eth)
+	if err != nil {
+		panic(err)
+	}
+
+	// Initialize a new Key Vault client
+	opts := &azsecrets.ClientOptions{
+		DisableChallengeResourceVerification: true,
+	}
+	if eth != "" {
+		fmt.Println("Getting secrets through %s ip", eth)
+		opts, err = getClientOptionsWithTransport(eth)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		fmt.Println("Getting secrets through default ip")
+	}
+	client, err := azsecrets.NewClient("https://isaacskvault.vault.azure.net/", cred, opts)
+	if err != nil {
+		panic(err)
+	}
+
+	// Retrieve a secret
+	secretName := "test"
+	fmt.Printf("Getting secret: %s\n", secretName)
+	resp, err := client.GetSecret(context.Background(), secretName, "", nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	} else {
+		fmt.Printf("Secret value: %s\n", *resp.Value)
+	}
 }
