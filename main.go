@@ -16,7 +16,7 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/getsecret/{eth}/{target}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/testcon/{eth}/{target}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		eth := vars["eth"]
 		target := vars["target"]
