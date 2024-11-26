@@ -129,7 +129,7 @@ func getSecretWithDefaultCreds(eth string) error {
 	// initialize keyvault client
 	opts := &azsecrets.ClientOptions{}
 
-	if eth != "" {
+	if eth != "def" {
 		opts, err = getClientOptionsWithTransport(eth)
 		if err != nil {
 			return fmt.Errorf("Error getting client options with transport: %v", err)
@@ -156,7 +156,7 @@ func getSecretWithDefaultCreds(eth string) error {
 }
 
 func testInternetConnectivity(eth string) error {
-	if eth != "" {
+	if eth != "def" {
 		// Get the eth0 IP address
 		eth0IP, err := getethIP(eth)
 		if err != nil {
