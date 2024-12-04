@@ -16,25 +16,32 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/testcon/{eth}/{target}/{network}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		eth := vars["eth"]
-		target := vars["target"]
-		network := vars["network"]
-		fmt.Printf("eth: %s\n", eth)
-		fmt.Printf("target: %s\n", target)
-		err := makeHttpCallWithPacketCapture(eth, target, network)
-		if err != nil {
-			fmt.Println("Error making http call with packet capture: ", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		} else {
-			fmt.Fprint(w, "Success")
-		}
-	})
+	r.HandleFunc("/testcon/{eth}/{target}/{network}", testConnectionHandler).Methods("GET")
+	r.HandleFunc("/hello", helloWorldHandler).Methods("GET")
 
 	fmt.Println("Server is running on port 8080...")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
+	}
+}
+
+func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello, World!")
+}
+
+func testConnectionHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eth := vars["eth"]
+	target := vars["target"]
+	network := vars["network"]
+	fmt.Printf("eth: %s\n", eth)
+	fmt.Printf("target: %s\n", target)
+	err := makeHttpCallWithPacketCapture(eth, target, network)
+	if err != nil {
+		fmt.Println("Error making http call with packet capture: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		fmt.Fprint(w, "Success")
 	}
 }
 
