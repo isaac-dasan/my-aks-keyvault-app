@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 )
 
@@ -102,4 +103,44 @@ func getethIP(eth string) (net.IP, error) {
 	}
 
 	return nil, fmt.Errorf("%s not found", eth)
+}
+
+func getworkloadIdentityClientOptions(eth string) (*azidentity.WorkloadIdentityCredentialOptions, error) {
+	// Create a new WorkloadIdentityCredentialOptions
+	opts := &azidentity.WorkloadIdentityCredentialOptions{}
+
+	et := &ExportTransporter{}
+	if eth != "def" {
+		ethIP, err := getethIP(eth)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting eth IP: %v", err)
+		}
+		et = &ExportTransporter{localAddr: ethIP}
+	}
+	opts.Transport = et
+	return opts, nil
+}
+
+type ExportTransporter struct {
+	localAddr net.IP
+}
+
+func (t *ExportTransporter) Do(req *http.Request) (*http.Response, error) {
+	fmt.Println("Do")
+	client := &http.Client{}
+	if t.localAddr != nil {
+		client = &http.Client{
+			Transport: &http.Transport{
+				DialContext: (&net.Dialer{
+					LocalAddr: &net.TCPAddr{
+						IP: t.localAddr,
+					},
+				}).DialContext,
+			},
+		}
+		fmt.Printf("Getting workloadidentity token through %s ip\n", t.localAddr)
+	} else {
+		fmt.Println("Getting workloadidentity token through default ip")
+	}
+	return client.Do(req)
 }

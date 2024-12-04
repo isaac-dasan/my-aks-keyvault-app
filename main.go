@@ -16,13 +16,14 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/testcon/{eth}/{target}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/testcon/{eth}/{target}/{network}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		eth := vars["eth"]
 		target := vars["target"]
+		network := vars["network"]
 		fmt.Printf("eth: %s\n", eth)
 		fmt.Printf("target: %s\n", target)
-		err := makeHttpCallWithPacketCapture(eth, target)
+		err := makeHttpCallWithPacketCapture(eth, target, network)
 		if err != nil {
 			fmt.Println("Error making http call with packet capture: ", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,7 +38,7 @@ func main() {
 	}
 }
 
-func makeHttpCallWithPacketCapture(eth string, target string) error {
+func makeHttpCallWithPacketCapture(eth string, target string, network string) error {
 	outputFile := getoutputFileName()
 	// Create a context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -90,7 +91,7 @@ func makeHttpCallWithPacketCapture(eth string, target string) error {
 		case "internet":
 			err = testInternetConnectivity(eth)
 		case "private":
-			err = getSecretWithDefaultCreds(eth)
+			err = getSecretWithDefaultCreds(eth, network)
 		}
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
@@ -117,10 +118,15 @@ func makeHttpCallWithPacketCapture(eth string, target string) error {
 	return nil
 }
 
-func getSecretWithDefaultCreds(eth string) error {
+func getSecretWithDefaultCreds(eth string, network string) error {
 	fmt.Println("Getting secrets with default creds")
 
-	cred, err := azidentity.NewWorkloadIdentityCredential(nil)
+	wopts, err := getworkloadIdentityClientOptions(eth)
+	if err != nil {
+		return fmt.Errorf("Error getting workload identity client options: %v", err)
+	}
+
+	cred, err := azidentity.NewWorkloadIdentityCredential(wopts)
 	if err != nil {
 		return fmt.Errorf("Error creating new WorkloadIdentityCredential: %v", err)
 	}
@@ -129,16 +135,20 @@ func getSecretWithDefaultCreds(eth string) error {
 	// initialize keyvault client
 	opts := &azsecrets.ClientOptions{}
 
-	if eth != "def" {
-		opts, err = getClientOptionsWithTransport(eth)
-		if err != nil {
-			return fmt.Errorf("Error getting client options with transport: %v", err)
-		}
-		fmt.Printf("Getting secrets through %s ip\n", eth)
-	} else {
-		fmt.Println("Getting secrets through default ip")
+	// if eth != "def" {
+	// 	opts, err = getClientOptionsWithTransport(eth)
+	// 	if err != nil {
+	// 		return fmt.Errorf("Error getting client options with transport: %v", err)
+	// 	}
+	// 	fmt.Printf("Getting secrets through %s ip\n", eth)
+	// } else {
+	// 	fmt.Println("Getting secrets through default ip")
+	// }
+	url := "https://isaacskvault.vault.azure.net/"
+	if network == "cust" {
+		url = "https://custkvault.vault.azure.net/"
 	}
-	client, err := azsecrets.NewClient("https://isaacskvault.vault.azure.net/", cred, opts)
+	client, err := azsecrets.NewClient(url, cred, opts)
 	if err != nil {
 		return fmt.Errorf("Error creating new client: %v", err)
 	}

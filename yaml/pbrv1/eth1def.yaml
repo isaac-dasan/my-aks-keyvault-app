@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000006
+        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000001
       containers:
       - name: eth1defpbr1
         image: isaac73/my-aks-keyvault-app:latest
@@ -48,7 +48,6 @@ metadata:
   name: eth1defpbr1-svc
   namespace: default
 spec:
-  type: LoadBalancer
   ports:
   - port: 80
     targetPort: 8080
