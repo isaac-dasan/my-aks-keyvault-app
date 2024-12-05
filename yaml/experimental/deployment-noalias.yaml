@@ -21,7 +21,7 @@ spec:
         kubernetes.io/hostname: aks-standardd4s1-30523925-vmss000002
       containers:
       - name: my-aks-keyvault-app
-        image: isaac73/my-aks-keyvault-app:latest
+        image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
             memory: "512Mi"

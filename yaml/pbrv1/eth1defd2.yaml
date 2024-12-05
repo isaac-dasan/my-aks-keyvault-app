@@ -1,26 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eth0defpbr1-dep
+  name: eth1defpbr1d2-dep
   namespace: default
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: eth0defpbr1
+      app: eth1defpbr1d2
   template:
     metadata:
       labels:
-        app: eth0defpbr1
+        app: eth1defpbr1d2
         azure.workload.identity/use: "true"
         kubernetes.azure.com/pod-network: pn
         kubernetes.azure.com/pod-network-instance: pni
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000005
+        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000003
       containers:
-      - name: eth0defpbr1
+      - name: eth1defpbr1d2
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
@@ -40,49 +42,40 @@ spec:
       volumes:
       - name: scripts
         configMap:
-          name: network-scripts-eth0defpbr1
+          name: network-scripts-eth1defpbr1d2
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eth0defpbr1-svc
+  name: eth1defpbr1d2-svc
   namespace: default
 spec:
-  type: LoadBalancer
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: eth0defpbr1
+    app: eth1defpbr1d2
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: network-scripts-eth0defpbr1
+  name: network-scripts-eth1defpbr1d2
   namespace: default
 data:
   configure-network.sh: |
     #!/bin/sh
-    # Remove current default
-    ip route del default via 169.254.2.1 dev eth1
-
-    # Add eth0 as default
-    ip route add default via 169.254.1.1 dev eth0 proto static
-
-    # Policy based routing for eth1:
     # Create additional routing table
-    echo "200 eth1_table" >> /etc/iproute2/rt_tables
+    echo "200 eth0_table" >> /etc/iproute2/rt_tables
 
-    # Make eth1 default in eth1_table
-    ip route add default via 169.254.2.1 dev eth1 table eth1_table
+    # Make eth0 default in eth0_table
+    ip route add default via 169.254.1.1 dev eth0 table eth0_table
 
-    # add outbound rule on the ip for eth1
-    # Get the IP address of eth1
-    export ip_address=$(ip addr show eth1 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-    ip rule add from $ip_address lookup eth1_table
+    # Add outbound rule
+    export ip_address=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+    ip rule add from $ip_address lookup eth0_table
 
-    echo "ip route show table eth1_table"
-    ip route show table eth1_table
+    echo "ip route show table eth0_table"
+    ip route show table eth0_table
     echo "ip rule show"
     ip rule show
     echo "ip route show"

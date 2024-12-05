@@ -17,7 +17,7 @@ spec:
       serviceAccountName: mi-service-account
       containers:
       - name: testapp
-        image: isaac73/my-aks-keyvault-app:latest
+        image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
             memory: "512Mi"
