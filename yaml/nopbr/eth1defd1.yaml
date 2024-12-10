@@ -20,7 +20,7 @@ spec:
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000001
+        kubernetes.io/hostname: aks-work-36906996-vmss000000
       containers:
       - name: eth1defzpbrd1
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
