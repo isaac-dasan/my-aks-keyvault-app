@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eth1defpbr1d2WithLB-dep
+  name: eth1defpbr1d2withlb-dep
   namespace: default
 spec:
   replicas: 1
@@ -9,20 +9,20 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: eth1defpbr1d2WithLB
+      app: eth1defpbr1d2withlb
   template:
     metadata:
       labels:
-        app: eth1defpbr1d2WithLB
+        app: eth1defpbr1d2withlb
         azure.workload.identity/use: "true"
         kubernetes.azure.com/pod-network: pn
         kubernetes.azure.com/pod-network-instance: pni
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-work-36906996-vmss000000
+        kubernetes.io/hostname: aks-work-36906996-vmss000001
       containers:
-      - name: eth1defpbr1d2WithLB
+      - name: eth1defpbr1d2withlb
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
@@ -42,25 +42,26 @@ spec:
       volumes:
       - name: scripts
         configMap:
-          name: network-scripts-eth1defpbr1d2WithLB
+          name: network-scripts-eth1defpbr1d2withlb
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eth1defpbr1d2WithLB-svc
+  name: eth1defpbr1d2withlb-svc
   namespace: default
 spec:
   type: LoadBalancer
+  externalTrafficPolicy: Local
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: eth1defpbr1d2WithLB
+    app: eth1defpbr1d2withlb
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: network-scripts-eth1defpbr1d2WithLB
+  name: network-scripts-eth1defpbr1d2withlb
   namespace: default
 data:
   configure-network.sh: |
