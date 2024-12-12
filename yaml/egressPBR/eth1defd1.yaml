@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eth1defpbr1d2-dep
+  name: eth1defegresspbrd2-dep
   namespace: default
 spec:
   replicas: 1
@@ -9,11 +9,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: eth1defpbr1d2
+      app: eth1defegresspbrd2
   template:
     metadata:
       labels:
-        app: eth1defpbr1d2
+        app: eth1defegresspbrd2
         azure.workload.identity/use: "true"
         kubernetes.azure.com/pod-network: pn
         kubernetes.azure.com/pod-network-instance: pni
@@ -22,7 +22,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: aks-work-36906996-vmss000000
       containers:
-      - name: eth1defpbr1d2
+      - name: eth1defegresspbrd2
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
@@ -42,24 +42,24 @@ spec:
       volumes:
       - name: scripts
         configMap:
-          name: network-scripts-eth1defpbr1d2
+          name: network-scripts-eth1defegresspbrd2
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eth1defpbr1d2-svc
+  name: eth1defegresspbrd2-svc
   namespace: default
 spec:
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: eth1defpbr1d2
+    app: eth1defegresspbrd2
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: network-scripts-eth1defpbr1d2
+  name: network-scripts-eth1defegresspbrd2
   namespace: default
 data:
   configure-network.sh: |
