@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     dnsutils \
     curl \
+    iptables \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the binary from the builder stage.

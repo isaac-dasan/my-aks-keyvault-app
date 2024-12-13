@@ -26,6 +26,7 @@ func main() {
 }
 
 func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Request received from %s", r.RemoteAddr)
 	fmt.Fprintln(w, "Hello, World!")
 }
 
