@@ -1,19 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eth1defzpbrd1-dep
+  name: eth1defingresspbretp-dep
   namespace: default
 spec:
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
-      app: eth1defzpbrd1
+      app: eth1defingresspbretp
   template:
     metadata:
       labels:
-        app: eth1defzpbrd1
+        app: eth1defingresspbretp
         azure.workload.identity/use: "true"
         kubernetes.azure.com/pod-network: pn
         kubernetes.azure.com/pod-network-instance: pni
@@ -22,7 +20,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: aks-work-36906996-vmss000002
       containers:
-      - name: eth1defzpbrd1
+      - name: eth1defingresspbretp
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
         resources:
           limits:
@@ -35,19 +33,19 @@ spec:
         - containerPort: 8080
         securityContext:
           privileged: true
-        # command: ['sh', '-c', 'sh /scripts/configure-network.sh && /myapp']
+        command: ['sh', '-c', 'sh /scripts/configure-network.sh && /myapp']
         volumeMounts:
         - name: scripts
           mountPath: /scripts
       volumes:
       - name: scripts
         configMap:
-          name: network-scripts-eth1defzpbrd1
+          name: network-scripts-eth1defingresspbretp
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: eth1defzpbrd1-svc
+  name: eth1defingresspbretp-svc
   namespace: default
 spec:
   type: LoadBalancer
@@ -56,25 +54,31 @@ spec:
   - port: 80
     targetPort: 8080
   selector:
-    app: eth1defzpbrd1
+    app: eth1defingresspbretp
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: network-scripts-eth1defzpbrd1
+  name: network-scripts-eth1defingresspbretp
   namespace: default
 data:
   configure-network.sh: |
     #!/bin/sh
-    # Create additional routing table
+  
+    # Create eth0 routing table
     echo "200 eth0_table" >> /etc/iproute2/rt_tables
 
     # Make eth0 default in eth0_table
     ip route add default via 169.254.1.1 dev eth0 table eth0_table
 
-    # Add outbound rule
-    export ip_address=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-    ip rule add from $ip_address lookup eth0_table
+    # connMark packets coming from eth0 as `1`
+    iptables -t mangle -A PREROUTING -i eth0 -j CONNMARK --set-mark 1
+
+    # Restore connMark to packet mark
+    iptables -t mangle -A OUTPUT -j CONNMARK --restore-mark
+
+    # Add a rule to lookup custom route table 200 for marked packets
+    ip rule add fwmark 1 table 200
 
     echo "ip route show table eth0_table"
     ip route show table eth0_table

@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000003
+        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000006
       containers:
       - name: eth1defingresspbr
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
@@ -62,20 +62,20 @@ metadata:
 data:
   configure-network.sh: |
     #!/bin/sh
-    # connMark packets coming from eth0 as `1`
-    iptables -t mangle -A PREROUTING -i eth0 -j CONNMARK --set-mark 1
-    #Restore connMark to packet mark
-    iptables -t mangle -A OUTPUT -j CONNMARK --restore-mark
-
-    # Create additional routing table
+  
+    # Create eth0 routing table
     echo "200 eth0_table" >> /etc/iproute2/rt_tables
 
     # Make eth0 default in eth0_table
     ip route add default via 169.254.1.1 dev eth0 table eth0_table
 
-    # Add outbound rule
-    export ip_address=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-    ip rule add from $ip_address lookup eth0_table
+    # connMark packets coming from eth0 as `1`
+    iptables -t mangle -A PREROUTING -i eth0 -j CONNMARK --set-mark 1
+
+    # Restore connMark to packet mark
+    iptables -t mangle -A OUTPUT -j CONNMARK --restore-mark
+
+    # Add a rule to lookup custom route table 200 for marked packets
     ip rule add fwmark 1 table 200
 
     echo "ip route show table eth0_table"
