@@ -39,7 +39,15 @@ spec:
         volumeMounts:
         - name: scripts
           mountPath: /scripts
+        - name: etc-iproute2
+          mountPath: /etc/iproute2
       volumes:
+      - name: etc-iproute2
+        configMap:
+          name: rt-tables-config
+          items:
+            - key: rt_tables
+              path: rt_tables
       - name: scripts
         configMap:
           name: network-scripts-eth1defegresspbrd2
@@ -59,13 +67,19 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  name: rt-tables-config
+data:
+  rt_tables: "200 eth0_table"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
   name: network-scripts-eth1defegresspbrd2
   namespace: default
 data:
   configure-network.sh: |
     #!/bin/sh
-    # Create additional routing table
-    echo "200 eth0_table" >> /etc/iproute2/rt_tables
+    set -ex
 
     # Make eth0 default in eth0_table
     ip route add default via 169.254.1.1 dev eth0 table eth0_table
