@@ -20,7 +20,7 @@ spec:
     spec:
       serviceAccountName: mi-service-account
       nodeSelector:
-        kubernetes.io/hostname: aks-standardd4s1-11101011-vmss000003
+        kubernetes.io/hostname: aks-work-36906996-vmss000000
       containers:
       - name: eth1defegresspbrd2
         image: isaacacn.azurecr.io/pbrtest/my-aks-keyvault-app:latest
@@ -64,18 +64,17 @@ metadata:
 data:
   configure-network.sh: |
     #!/bin/sh
-    # Create additional routing table
-    echo "200 eth0_table" >> /etc/iproute2/rt_tables
+    set -e
 
     # Make eth0 default in eth0_table
-    ip route add default via 169.254.1.1 dev eth0 table eth0_table
+    ip route add default via 169.254.1.1 dev eth0 table 200
 
     # Add outbound rule
     export ip_address=$(ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-    ip rule add from $ip_address lookup eth0_table
+    ip rule add from $ip_address lookup 200
 
     echo "ip route show table eth0_table"
-    ip route show table eth0_table
+    ip route show table 200
     echo "ip rule show"
     ip rule show
     echo "ip route show"

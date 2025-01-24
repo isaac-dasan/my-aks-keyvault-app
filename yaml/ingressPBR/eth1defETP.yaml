@@ -68,12 +68,9 @@ data:
     #!/bin/sh
     set -ex
 
-    # Create eth0 routing table
-    echo "200 eth0_table" >> /etc/iproute2/rt_tables
-
     # Make eth0 default in eth0_table
-    ip route add default via 169.254.1.1 dev eth0 table eth0_table
-
+    ip route add default via 169.254.1.1 dev eth0 table 200
+    
     # connMark packets coming from eth0 as `1`
     iptables -t mangle -A PREROUTING -i eth0 -j CONNMARK --set-mark 1
 
@@ -84,10 +81,10 @@ data:
     iptables -t mangle -A OUTPUT -j CONNMARK --restore-mark
 
     # Add a rule to lookup custom route table 200 for marked packets
-    ip rule add priority 1000 fwmark 0x1 table eth0_table
+    ip rule add priority 1000 fwmark 0x1 table 200
 
     # validate source IP
-    echo "net.ipv4.conf.eth1.src_valid_mark=1" >> /etc/sysctl.d/10-eth0.conf
+    $echo "net.ipv4.conf.eth1.src_valid_mark=1" >> /etc/sysctl.d/10-eth0.conf
     chmod 0644 /etc/sysctl.d/10-eth0.conf
     chown root:root /etc/sysctl.d/10-eth0.conf
     sysctl -p /etc/sysctl.d/10-eth0.conf
