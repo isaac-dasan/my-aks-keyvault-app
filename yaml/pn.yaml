@@ -4,9 +4,7 @@ metadata:
    finalizers:
    - finalizers.acn.azure.com/dnc-operations
    name: pn
-   labels:
-     kubernetes.azure.com/override-subnet-token: c0c4d4a0-e754-4203-b6c3-9914870ffda6
 spec:
-  subnetResourceID: /subscriptions/37deca37-c375-4a14-b90a-043849bd2bf1/resourceGroups/isaac-euap-002/providers/Microsoft.Network/virtualNetworks/custvnet/subnets/delgpod  
-  vnetGUID: 859bae52-453c-4a81-a265-7bb0eb5b654c
-  subnetGUID: 1e52c269-c5ac-4ca3-b1d5-67644f01c473
+  subnetResourceID: /subscriptions/37deca37-c375-4a14-b90a-043849bd2bf1/resourceGroups/isaac-002/providers/Microsoft.Network/virtualNetworks/custvnet/subnets/subnetdelegator  
+  vnetGUID: b7671e02-c43c-4e61-9400-c1d6ab72fd90
+  subnetGUID: 0e453709-abd6-4711-b824-eeef60836877

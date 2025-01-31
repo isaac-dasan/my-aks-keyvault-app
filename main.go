@@ -152,9 +152,9 @@ func getSecretWithDefaultCreds(eth string, network string) error {
 	// } else {
 	// 	fmt.Println("Getting secrets through default ip")
 	// }
-	url := "https://isaacskvault.vault.azure.net/"
+	url := "https://isaacskv.vault.azure.net/"
 	if network == "cust" {
-		url = "https://custkvault.vault.azure.net/"
+		url = "https://custkv.vault.azure.net/"
 	}
 	client, err := azsecrets.NewClient(url, cred, opts)
 	if err != nil {
